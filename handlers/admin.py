@@ -262,10 +262,9 @@ rm -f "$0"
         logger.info(f"Скрипт создан: {script_path}")
 
         logger.info("Запуск скрипта обновления...")
-        subprocess.Popen(["/bin/bash", script_path],
+        subprocess.Popen(["/usr/bin/systemd-run", "--unit=cms-update", "/bin/bash", script_path],
                          stdout=subprocess.DEVNULL,
-                         stderr=subprocess.DEVNULL,
-                         start_new_session=True)
+                         stderr=subprocess.DEVNULL)
         logger.info("Скрипт обновления запущен")
     except Exception as e:
         logger.error(f"Ошибка при обновлении панели: {e}")
