@@ -20,8 +20,6 @@ logger = logging.getLogger(__name__)
 async def update_checker(bot: Bot):
     while True:
         try:
-            await asyncio.sleep(10800)
-
             logger.info("Проверка обновлений...")
             result = check_for_updates()
 
@@ -34,8 +32,11 @@ async def update_checker(bot: Bot):
                 admin_ids.extend([admin_id for admin_id, in db_admins])
 
                 await notify_admins_about_update(bot, admin_ids, commit_hash, commit_message)
+
+            await asyncio.sleep(10800)
         except Exception as e:
             logger.error(f"Ошибка при проверке обновлений: {e}")
+            await asyncio.sleep(10800)
 
 
 async def main():
@@ -45,9 +46,6 @@ async def main():
     update_system_stats()
     update_docker_stats()
     logger.info("Статистика системы и Docker обновлена")
-
-    check_for_updates()
-    logger.info("Проверка обновлений инициализирована")
 
     bot = Bot(
         token=BOT_TOKEN,
