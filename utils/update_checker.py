@@ -42,8 +42,11 @@ def check_for_updates() -> tuple[bool, str, str] | None:
 
         if _last_checked_commit is None:
             _last_checked_commit = current_commit
-            logger.info("Инициализация проверки обновлений")
-            return None
+            if current_commit != remote_commit:
+                logger.info("Обнаружено обновление при инициализации!")
+            else:
+                logger.info("Инициализация проверки обновлений")
+                return None
 
         if current_commit != remote_commit and _last_checked_commit == current_commit:
             logger.info("Обнаружено обновление!")
