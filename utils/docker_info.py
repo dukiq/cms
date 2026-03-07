@@ -61,22 +61,30 @@ async def docker_stats_updater():
         await asyncio.sleep(60)
 
 
-def get_project_containers_count(project_path: str) -> int:
+def get_project_containers_count(project_path: str = None, network: str = None) -> int:
     """Получает количество запущенных контейнеров проекта"""
     try:
-        result = subprocess.run(
-            ["docker", "compose", "ps", "-q"],
-            cwd=project_path,
-            capture_output=True,
-            text=True,
-            timeout=5
-        )
+        if network:
+            result = subprocess.run(
+                ["docker", "ps", "-q", "--filter", f"network={network}"],
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
+        else:
+            result = subprocess.run(
+                ["docker", "compose", "ps", "-q"],
+                cwd=project_path,
+                capture_output=True,
+                text=True,
+                timeout=5
+            )
         containers = result.stdout.strip().split("\n")
         return len([c for c in containers if c])
     except Exception:
         return 0
 
 
-def is_project_running(project_path: str) -> bool:
+def is_project_running(project_path: str = None, network: str = None) -> bool:
     """Проверяет запущен ли проект"""
-    return get_project_containers_count(project_path) > 0
+    return get_project_containers_count(project_path, network) > 0

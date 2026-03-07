@@ -11,7 +11,6 @@ cat << "EOF"
 $$         $$$$"$$  '''    $
 `88bo,__,o, 888 Y88" 888o88b    dP
   "YUMMMMMP"MMM  M'  "MMM "YMmMY"
-
 EOF
 echo ""
 

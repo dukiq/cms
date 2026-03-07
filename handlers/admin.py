@@ -209,31 +209,14 @@ async def callback_update_panel(callback: CallbackQuery):
 set -e
 
 INSTALL_DIR="/opt/cms"
-TEMP_DIR="/opt/cms-temp"
 
-echo "Создание временной директории..."
-mkdir -p "$TEMP_DIR"
-
-echo "Копирование .env и базы данных..."
-cp "$INSTALL_DIR/.env" "$TEMP_DIR/"
-cp "$INSTALL_DIR/cms.db" "$TEMP_DIR/"
+cd "$INSTALL_DIR"
 
 echo "Остановка сервиса..."
 systemctl stop cmsdash
 
-echo "Удаление старой директории..."
-rm -rf "$INSTALL_DIR"
-
-echo "Клонирование репозитория..."
-git clone https://github.com/dukiq/cms "$INSTALL_DIR"
-cd "$INSTALL_DIR"
-
-echo "Восстановление .env и базы данных..."
-cp "$TEMP_DIR/.env" .env
-cp "$TEMP_DIR/cms.db" cms.db
-
-echo "Создание виртуального окружения..."
-python3 -m venv venv
+echo "Обновление кода..."
+git pull
 
 echo "Установка зависимостей..."
 . venv/bin/activate
@@ -254,14 +237,10 @@ curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
   -d "parse_mode=HTML" \
   -d "text=<tg-emoji emoji-id='5172533495162995360'>👋</tg-emoji> <b>Обновление панели завершено</b>"
 
-echo "Очистка временной директории..."
-rm -rf "$TEMP_DIR"
-
 rm -f "$0"
 '''
 
-    script_path = "/opt/cms-temp/update.sh"
-    os.makedirs("/opt/cms-temp", exist_ok=True)
+    script_path = "/tmp/cms_update.sh"
 
     with open(script_path, "w") as f:
         f.write(update_script)
