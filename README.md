@@ -3,4 +3,5 @@
 
 # Установка
 Linux:
-curl -fsSL https://raw.githubusercontent.com/dukiq/cms/main/install.sh | sudo bash
+
+bash <(curl -fsSL https://raw.githubusercontent.com/dukiq/cms/main/install.sh)

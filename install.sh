@@ -2,6 +2,8 @@
 
 set -e
 
+exec < /dev/tty
+
 cat << "EOF"
   .,-:::::  .        :   .::::::.
 ,;;;'````'  ;;,.    ;;; ;;;`    `
@@ -14,23 +16,13 @@ EOF
 echo ""
 
 INSTALL_DIR="/opt/cms"
-read -p "Введите директорию установки (/opt/cms): " input </dev/tty 2>/dev/null || true
-if [ -n "$input" ]; then
-    INSTALL_DIR="$input"
-fi
 
-echo ""
 echo "Установка в: $INSTALL_DIR"
 echo ""
 
 if [ -d "$INSTALL_DIR" ]; then
-    read -p "Директория существует. Удалить и переустановить? (y/n): " CONFIRM </dev/tty 2>/dev/null || CONFIRM="y"
-    if [ "$CONFIRM" = "y" ] || [ -z "$CONFIRM" ]; then
-        rm -rf "$INSTALL_DIR"
-    else
-        echo "Установка отменена"
-        exit 1
-    fi
+    echo "Удаление существующей директории..."
+    rm -rf "$INSTALL_DIR"
 fi
 
 echo "Клонирование репозитория..."
@@ -74,16 +66,10 @@ pip install -r requirements.txt
 echo ""
 echo "Конфигурация"
 echo "============"
-read -p "Введите токен бота: " BOT_TOKEN </dev/tty 2>/dev/null || true
-read -p "Введите ID администратора: " ADMIN_ID </dev/tty 2>/dev/null || true
-read -sp "Введите пароль удаления: " DELETE_PASSWORD </dev/tty 2>/dev/null || true
+read -p "Введите токен бота: " BOT_TOKEN
+read -p "Введите ID администратора: " ADMIN_ID
+read -sp "Введите пароль удаления: " DELETE_PASSWORD
 echo ""
-
-if [ -z "$BOT_TOKEN" ] || [ -z "$ADMIN_ID" ] || [ -z "$DELETE_PASSWORD" ]; then
-    echo "Ошибка: не все параметры заданы"
-    echo "Запустите скрипт напрямую: bash install.sh"
-    exit 1
-fi
 
 cat > .env << EOF
 BOT_TOKEN=$BOT_TOKEN
@@ -102,13 +88,15 @@ systemctl enable cmsdash
 systemctl start cmsdash
 
 echo ""
+echo "===================================="
 echo "Установка завершена!"
+echo "===================================="
 echo ""
 echo "Статус сервиса:"
 systemctl status cmsdash --no-pager
 echo ""
 echo "Команды:"
-echo "  Запуск:      systemctl start cmsdash"
+echo "  Статус:      systemctl status cmsdash"
 echo "  Остановка:   systemctl stop cmsdash"
 echo "  Перезапуск:  systemctl restart cmsdash"
 echo "  Логи:        journalctl -u cmsdash -f"
