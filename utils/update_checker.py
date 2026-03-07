@@ -38,11 +38,15 @@ def check_for_updates() -> tuple[bool, str, str] | None:
         )
         remote_commit = result.stdout.strip()
 
+        logger.info(f"Current: {current_commit[:7]}, Remote: {remote_commit[:7]}, Last: {_last_checked_commit[:7] if _last_checked_commit else 'None'}")
+
         if _last_checked_commit is None:
             _last_checked_commit = current_commit
+            logger.info("Инициализация проверки обновлений")
             return None
 
         if current_commit != remote_commit and _last_checked_commit == current_commit:
+            logger.info("Обнаружено обновление!")
             result = subprocess.run(
                 ["git", "log", "-1", "--format=%h", "origin/main"],
                 cwd="/opt/cms",
