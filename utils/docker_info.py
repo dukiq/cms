@@ -1,16 +1,14 @@
 import subprocess
 import asyncio
 
-Кешированная Docker статистика
 _cached_containers_count = 0
 _cached_networks_count = 0
 
 
 def update_docker_stats():
-    """Обновляет кешированную Docker статистику    global _cached_containers_count, _cached_networks_count
+    global _cached_containers_count, _cached_networks_count
 
     try:
-        Подсчет контейнеров
         result = subprocess.run(
             ["docker", "ps", "-q"],
             capture_output=True,
@@ -20,7 +18,6 @@ def update_docker_stats():
         containers = result.stdout.strip().split("\n")
         _cached_containers_count = len([c for c in containers if c])
 
-        Подсчет сетей (исключая стандартные)
         result = subprocess.run(
             ["docker", "network", "ls", "--format", "{{.Name}}"],
             capture_output=True,
@@ -28,7 +25,6 @@ def update_docker_stats():
             timeout=5
         )
         networks = result.stdout.strip().split("\n")
-        Фильтруем стандартные сети
         default_networks = {"bridge", "host", "none"}
         custom_networks = [n for n in networks if n and n not in default_networks]
         _cached_networks_count = len(custom_networks)
@@ -38,11 +34,11 @@ def update_docker_stats():
 
 
 def get_docker_stats() -> tuple[int, int]:
-    """Возвращает кешированную статистику (контейнеры, сети)    return _cached_containers_count, _cached_networks_count
+    return _cached_containers_count, _cached_networks_count
 
 
 def format_docker_stats() -> str:
-    """Форматирует Docker статистику для отображения    containers, networks = get_docker_stats()
+    containers, networks = get_docker_stats()
 
     return (
         f'<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>Docker</b>\n'
@@ -52,13 +48,13 @@ def format_docker_stats() -> str:
 
 
 async def docker_stats_updater():
-    """Фоновая задача для обновления Docker статистики каждую минуту    while True:
+    while True:
         update_docker_stats()
         await asyncio.sleep(60)
 
 
 def get_project_containers_count(project_path: str = None, network: str = None) -> int:
-    """Получает количество запущенных контейнеров проекта    try:
+    try:
         if network:
             result = subprocess.run(
                 ["docker", "ps", "-q", "--filter", f"network={network}"],
@@ -81,4 +77,4 @@ def get_project_containers_count(project_path: str = None, network: str = None) 
 
 
 def is_project_running(project_path: str = None, network: str = None) -> bool:
-    """Проверяет запущен ли проект    return get_project_containers_count(project_path, network) > 0
+    return get_project_containers_count(project_path, network) > 0

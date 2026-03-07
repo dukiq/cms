@@ -17,7 +17,7 @@ router = Router()
 
 
 def get_project_network(project_id: int) -> str:
-    """Получает основную сеть проекта    project = get_project(project_id)
+    project = get_project(project_id)
     if not project:
         return None
     _, _, _, network, _ = project
@@ -26,7 +26,7 @@ def get_project_network(project_id: int) -> str:
 
 @router.callback_query(F.data == "projects")
 async def callback_projects(callback: CallbackQuery):
-    """Показывает список проектов    projects = get_all_projects()
+    projects = get_all_projects()
     text = format_docker_stats()
 
     await callback.message.edit_text(
@@ -39,7 +39,7 @@ async def callback_projects(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("projects_page_"))
 async def callback_projects_page(callback: CallbackQuery):
-    """Переключение страниц проектов    page = int(callback.data.split("_")[-1])
+    page = int(callback.data.split("_")[-1])
     projects = get_all_projects()
     text = format_docker_stats()
 
@@ -53,12 +53,12 @@ async def callback_projects_page(callback: CallbackQuery):
 
 @router.callback_query(F.data == "projects_current")
 async def callback_projects_current(callback: CallbackQuery):
-    """Текущая страница - ничего не делаем    await callback.answer()
+    await callback.answer()
 
 
 @router.callback_query(F.data.regexp(r"^project_\d+$"))
 async def callback_project_view(callback: CallbackQuery):
-    """Просмотр проекта    project_id = int(callback.data.split("_")[1])
+    project_id = int(callback.data.split("_")[1])
     project = get_project(project_id)
 
     if not project:
@@ -87,7 +87,7 @@ async def callback_project_view(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_restart_"))
 async def callback_project_restart(callback: CallbackQuery):
-    """Перезапуск проекта    project_id = int(callback.data.split("_")[2])
+    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -104,7 +104,7 @@ async def callback_project_restart(callback: CallbackQuery):
     else:
         await callback.answer("Проект перезапущен")
 
-    # Обновляем меню
+Обновляем меню
     is_running = is_project_running(network=get_project_network(project_id))
     await callback.message.edit_reply_markup(
         reply_markup=get_project_menu(project_id, is_running)
@@ -113,7 +113,7 @@ async def callback_project_restart(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_rebuild_"))
 async def callback_project_rebuild(callback: CallbackQuery):
-    """Пересборка проекта    project_id = int(callback.data.split("_")[2])
+    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -122,7 +122,7 @@ async def callback_project_rebuild(callback: CallbackQuery):
 
     _, name, path, _, _ = project
 
-    # Показываем сообщение о пересборке
+Показываем сообщение о пересборке
     await callback.message.edit_text(
         "<tg-emoji emoji-id='5172533495162995360'>👋</tg-emoji> <b>Пересобираю...</b>",
         parse_mode="HTML"
@@ -132,7 +132,7 @@ async def callback_project_rebuild(callback: CallbackQuery):
     output, error_file = await rebuild_project(path)
 
     if error_file:
-        # Отправляем файл с ошибками
+    Отправляем файл с ошибками
         await callback.message.answer_document(FSInputFile(error_file))
         await callback.message.edit_text(
             "<tg-emoji emoji-id='5172888203627070189'>👋</tg-emoji> <b>Ошибка при пересборке</b>",
@@ -149,7 +149,7 @@ async def callback_project_rebuild(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_toggle_"))
 async def callback_project_toggle(callback: CallbackQuery):
-    """Включить/выключить проект    project_id = int(callback.data.split("_")[2])
+    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -168,7 +168,7 @@ async def callback_project_toggle(callback: CallbackQuery):
 
     await callback.answer(message, show_alert=True)
 
-    # Обновляем меню
+Обновляем меню
     is_running = is_project_running(network=get_project_network(project_id))
     await callback.message.edit_reply_markup(
         reply_markup=get_project_menu(project_id, is_running)
@@ -177,7 +177,7 @@ async def callback_project_toggle(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_pull_"))
 async def callback_project_pull(callback: CallbackQuery):
-    """Git pull проекта    project_id = int(callback.data.split("_")[2])
+    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -197,7 +197,7 @@ async def callback_project_pull(callback: CallbackQuery):
 
 @router.callback_query(F.data == "back_projects")
 async def callback_back_projects(callback: CallbackQuery):
-    """Возврат к списку проектов    projects = get_all_projects()
+    projects = get_all_projects()
     text = format_docker_stats()
 
     await callback.message.edit_text(
@@ -210,7 +210,7 @@ async def callback_back_projects(callback: CallbackQuery):
 
 @router.callback_query(F.data == "project_create")
 async def callback_project_create(callback: CallbackQuery, state: FSMContext):
-    """Создание проекта    await callback.message.edit_text(
+    await callback.message.edit_text(
         "Введите название проекта на английском (до 32 символов):",
         parse_mode="HTML"
     )
@@ -220,9 +220,9 @@ async def callback_project_create(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ProjectStates.waiting_name)
 async def process_project_name(message: Message, state: FSMContext):
-    """Обработка названия проекта    name = message.text.strip()
+    name = message.text.strip()
 
-    # Проверка на английские символы и длину
+Проверка на английские символы и длину
     if not re.match(r'^[a-zA-Z0-9_-]+$', name):
         await message.answer("Название должно содержать только английские буквы, цифры, _ и -")
         return
@@ -231,7 +231,7 @@ async def process_project_name(message: Message, state: FSMContext):
         await message.answer("Название не должно превышать 32 символа")
         return
 
-    # Сохраняем название
+Сохраняем название
     await state.update_data(name=name)
     await state.set_state(ProjectStates.waiting_path)
 
@@ -240,26 +240,26 @@ async def process_project_name(message: Message, state: FSMContext):
 
 @router.message(ProjectStates.waiting_path)
 async def process_project_path(message: Message, state: FSMContext):
-    """Обработка пути проекта    path = message.text.strip()
+    path = message.text.strip()
 
-    # Проверка существования директории
+Проверка существования директории
     if not os.path.isdir(path):
         await message.answer("Директория не существует. Введите существующую директорию:")
         return
 
-    # Получаем сохраненные данные
+Получаем сохраненные данные
     data = await state.get_data()
     name = data.get("name")
 
-    # Парсим docker-compose.yml
+Парсим docker-compose.yml
     network, volumes = parse_docker_compose(path)
 
-    # Сохраняем проект в БД
+Сохраняем проект в БД
     try:
         project_id = add_project(name, path, network, volumes)
         await state.clear()
 
-        # Показываем список проектов
+    Показываем список проектов
         projects = get_all_projects()
         text = format_docker_stats()
 
@@ -279,14 +279,14 @@ async def process_project_path(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.regexp(r"^project_delete_\d+$"))
 async def callback_project_delete(callback: CallbackQuery, state: FSMContext):
-    """Запрос пароля для удаления проекта    project_id = int(callback.data.split("_")[2])
+    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
         await callback.answer("Проект не найден", show_alert=True)
         return
 
-    # Сохраняем ID проекта в состояние
+Сохраняем ID проекта в состояние
     await state.update_data(delete_project_id=project_id)
     await state.set_state(ProjectStates.waiting_delete_password)
 
@@ -299,19 +299,19 @@ async def callback_project_delete(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ProjectStates.waiting_delete_password)
 async def process_delete_password(message: Message, state: FSMContext):
-    """Проверка пароля для удаления    password = message.text.strip()
+    password = message.text.strip()
 
     if password != DELETE_PASSWORD:
         await message.answer("Неверный пароль")
         return
 
-    # Получаем ID проекта
+Получаем ID проекта
     data = await state.get_data()
     project_id = data.get("delete_project_id")
 
     await state.clear()
 
-    # Спрашиваем об удалении директории
+Спрашиваем об удалении директории
     await message.answer(
         "<tg-emoji emoji-id='5172445899304993500'>👋</tg-emoji> <b>Удалить также директорию проекта?</b>",
         parse_mode="HTML",
@@ -321,7 +321,7 @@ async def process_delete_password(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("project_delete_yes_"))
 async def callback_project_delete_yes(callback: CallbackQuery):
-    """Удаление проекта с директорией    project_id = int(callback.data.split("_")[3])
+    project_id = int(callback.data.split("_")[3])
     project = get_project(project_id)
 
     if not project:
@@ -330,19 +330,19 @@ async def callback_project_delete_yes(callback: CallbackQuery):
 
     _, name, path, _, _ = project
 
-    # Удаляем директорию
+Удаляем директорию
     try:
         subprocess.run(["rm", "-rf", path], check=True, timeout=30)
     except Exception as e:
         await callback.answer(f"Ошибка при удалении директории: {str(e)}", show_alert=True)
         return
 
-    # Удаляем из БД
+Удаляем из БД
     delete_project(project_id)
 
     await callback.answer("Проект и директория удалены")
 
-    # Показываем список проектов
+Показываем список проектов
     projects = get_all_projects()
     text = format_docker_stats()
 
@@ -355,7 +355,7 @@ async def callback_project_delete_yes(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_delete_no_"))
 async def callback_project_delete_no(callback: CallbackQuery):
-    """Удаление проекта только из БД    project_id = int(callback.data.split("_")[3])
+    project_id = int(callback.data.split("_")[3])
     project = get_project(project_id)
 
     if not project:
@@ -364,12 +364,12 @@ async def callback_project_delete_no(callback: CallbackQuery):
 
     _, name, _, _, _ = project
 
-    # Удаляем из БД
+Удаляем из БД
     delete_project(project_id)
 
     await callback.answer("Проект удален из БД")
 
-    # Показываем список проектов
+Показываем список проектов
     projects = get_all_projects()
     text = format_docker_stats()
 
@@ -382,7 +382,7 @@ async def callback_project_delete_no(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_refresh_"))
 async def callback_project_refresh(callback: CallbackQuery):
-    """Обновление информации о проекте    project_id = int(callback.data.split("_")[2])
+    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -391,11 +391,11 @@ async def callback_project_refresh(callback: CallbackQuery):
 
     _, name, path, _, _ = project
 
-    # Обновляем network и volumes из docker-compose.yml
+Обновляем network и volumes из docker-compose.yml
     network, volumes = parse_docker_compose(path)
     update_project(project_id, network, volumes)
 
-    # Получаем обновленную информацию
+Получаем обновленную информацию
     main_network = get_project_network(project_id)
     containers_count = get_project_containers_count(network=main_network) if main_network else 0
     is_running = is_project_running(network=main_network)
