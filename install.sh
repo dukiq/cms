@@ -13,7 +13,7 @@ $$         $$$$"$$  '''    $
 EOF
 echo ""
 
-read -p "Введите директорию установки (/opt/cms): " INSTALL_DIR </dev/tty
+read -p "Введите директорию установки (/opt/cms): " INSTALL_DIR </dev/tty 2>/dev/null || true
 INSTALL_DIR=${INSTALL_DIR:-/opt/cms}
 
 echo ""
@@ -21,8 +21,8 @@ echo "Установка в: $INSTALL_DIR"
 echo ""
 
 if [ -d "$INSTALL_DIR" ]; then
-    read -p "Директория существует. Удалить и переустановить? (y/n): " CONFIRM </dev/tty
-    if [ "$CONFIRM" = "y" ]; then
+    read -p "Директория существует. Удалить и переустановить? (y/n): " CONFIRM </dev/tty 2>/dev/null || CONFIRM="y"
+    if [ "$CONFIRM" = "y" ] || [ -z "$CONFIRM" ]; then
         rm -rf "$INSTALL_DIR"
     else
         echo "Установка отменена"
@@ -71,10 +71,16 @@ pip install -r requirements.txt
 echo ""
 echo "Конфигурация"
 echo "============"
-read -p "Введите токен бота: " BOT_TOKEN </dev/tty
-read -p "Введите ID администратора: " ADMIN_ID </dev/tty
-read -sp "Введите пароль удаления: " DELETE_PASSWORD </dev/tty
+read -p "Введите токен бота: " BOT_TOKEN </dev/tty 2>/dev/null || true
+read -p "Введите ID администратора: " ADMIN_ID </dev/tty 2>/dev/null || true
+read -sp "Введите пароль удаления: " DELETE_PASSWORD </dev/tty 2>/dev/null || true
 echo ""
+
+if [ -z "$BOT_TOKEN" ] || [ -z "$ADMIN_ID" ] || [ -z "$DELETE_PASSWORD" ]; then
+    echo "Ошибка: не все параметры заданы"
+    echo "Запустите скрипт напрямую: bash install.sh"
+    exit 1
+fi
 
 cat > .env << EOF
 BOT_TOKEN=$BOT_TOKEN
