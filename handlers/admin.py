@@ -247,7 +247,7 @@ rm -f "$0"
 
     os.chmod(script_path, 0o755)
 
-    subprocess.Popen(["bash", script_path],
+    subprocess.Popen(["/bin/bash", script_path],
                      stdout=subprocess.DEVNULL,
                      stderr=subprocess.DEVNULL,
                      start_new_session=True)
