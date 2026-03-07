@@ -32,11 +32,19 @@ def parse_docker_compose(project_path: str) -> tuple[str, str]:
 
             networks = []
             if 'networks' in config and config['networks']:
-                networks = list(config['networks'].keys())
+                for net_key, net_data in config['networks'].items():
+                    if isinstance(net_data, dict) and 'name' in net_data:
+                        networks.append(net_data['name'])
+                    else:
+                        networks.append(net_key)
 
             volumes = []
             if 'volumes' in config and config['volumes']:
-                volumes = list(config['volumes'].keys())
+                for vol_key, vol_data in config['volumes'].items():
+                    if isinstance(vol_data, dict) and 'name' in vol_data:
+                        volumes.append(vol_data['name'])
+                    else:
+                        volumes.append(vol_key)
 
             networks_str = ", ".join(networks) if networks else ""
             volumes_str = ", ".join(volumes) if volumes else ""
