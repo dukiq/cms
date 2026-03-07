@@ -13,8 +13,11 @@ $$         $$$$"$$  '''    $
 EOF
 echo ""
 
-read -p "Введите директорию установки (/opt/cms): " INSTALL_DIR </dev/tty 2>/dev/null || true
-INSTALL_DIR=${INSTALL_DIR:-/opt/cms}
+INSTALL_DIR="/opt/cms"
+read -p "Введите директорию установки (/opt/cms): " input </dev/tty 2>/dev/null || true
+if [ -n "$input" ]; then
+    INSTALL_DIR="$input"
+fi
 
 echo ""
 echo "Установка в: $INSTALL_DIR"
