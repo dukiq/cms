@@ -197,7 +197,10 @@ async def callback_update_panel(callback: CallbackQuery):
     """Обновление панели"""
     import subprocess
     import os
+    import logging
     from config import BOT_TOKEN, ADMIN_ID
+
+    logger = logging.getLogger(__name__)
 
     await callback.message.edit_text(
         "<tg-emoji emoji-id='5172533495162995360'>👋</tg-emoji> <b>Запуск обновления...</b>",
@@ -241,12 +244,19 @@ rm -f "$0"
 
     script_path = "/tmp/cms_update.sh"
 
-    with open(script_path, "w") as f:
-        f.write(update_script)
+    try:
+        logger.info("Создание скрипта обновления...")
+        with open(script_path, "w") as f:
+            f.write(update_script)
 
-    os.chmod(script_path, 0o755)
+        os.chmod(script_path, 0o755)
+        logger.info(f"Скрипт создан: {script_path}")
 
-    subprocess.Popen(["/bin/bash", script_path],
-                     stdout=subprocess.DEVNULL,
-                     stderr=subprocess.DEVNULL,
-                     start_new_session=True)
+        logger.info("Запуск скрипта обновления...")
+        subprocess.Popen(["/bin/bash", script_path],
+                         stdout=subprocess.DEVNULL,
+                         stderr=subprocess.DEVNULL,
+                         start_new_session=True)
+        logger.info("Скрипт обновления запущен")
+    except Exception as e:
+        logger.error(f"Ошибка при обновлении панели: {e}")
