@@ -29,17 +29,7 @@ def parse_docker_compose(project_path: str) -> tuple[str, str]:
                 if isinstance(net_data, dict) and 'name' in net_data:
                     networks.append(net_data['name'])
                 else:
-                    real_name = f"{project_name}_{net_key}"
-                    result = subprocess.run(
-                        ["docker", "network", "ls", "--format", "{{.Name}}", "--filter", f"name={real_name}"],
-                        capture_output=True,
-                        text=True,
-                        timeout=5
-                    )
-                    if result.returncode == 0 and result.stdout.strip():
-                        networks.append(result.stdout.strip())
-                    else:
-                        networks.append(net_key)
+                    networks.append(f"{project_name}_{net_key}")
 
         volumes = []
         if 'volumes' in compose_data and compose_data['volumes']:
