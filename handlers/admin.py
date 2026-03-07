@@ -210,10 +210,9 @@ set -e
 
 INSTALL_DIR="/opt/cms"
 
-cd "$INSTALL_DIR"
+sleep 2
 
-echo "Остановка сервиса..."
-systemctl stop cmsdash
+cd "$INSTALL_DIR"
 
 echo "Обновление кода..."
 git pull
@@ -223,13 +222,13 @@ echo "Установка зависимостей..."
 pip install -r requirements.txt
 
 echo "Перезапуск сервиса..."
-systemctl start cmsdash
+systemctl restart cmsdash
+
+sleep 3
 
 echo "Извлечение токена и ID..."
 BOT_TOKEN=$(grep BOT_TOKEN .env | cut -d'=' -f2)
 ADMIN_ID=$(grep ADMIN_ID .env | cut -d'=' -f2)
-
-sleep 3
 
 echo "Отправка уведомления..."
 curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
