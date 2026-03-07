@@ -1,12 +1,10 @@
 import os
 import yaml
+import subprocess
 from pathlib import Path
 
 
 def parse_docker_compose(project_path: str) -> tuple[str, str]:
-    """
-    Парсит docker-compose.yml и возвращает (networks, volumes)
-    """
     compose_files = ["docker-compose.yml", "docker-compose.yaml", "compose.yml", "compose.yaml"]
 
     compose_path = None
@@ -20,23 +18,46 @@ def parse_docker_compose(project_path: str) -> tuple[str, str]:
         return "", ""
 
     try:
-        with open(compose_path, 'r') as f:
-            compose_data = yaml.safe_load(f)
+        result = subprocess.run(
+            ["docker", "compose", "config", "--format", "json"],
+            cwd=project_path,
+            capture_output=True,
+            text=True,
+            timeout=10
+        )
 
-        # Получаем networks
-        networks = []
-        if 'networks' in compose_data and compose_data['networks']:
-            networks = list(compose_data['networks'].keys())
+        if result.returncode == 0:
+            import json
+            config = json.loads(result.stdout)
 
-        # Получаем volumes
-        volumes = []
-        if 'volumes' in compose_data and compose_data['volumes']:
-            volumes = list(compose_data['volumes'].keys())
+            networks = []
+            if 'networks' in config and config['networks']:
+                networks = list(config['networks'].keys())
 
-        networks_str = ", ".join(networks) if networks else ""
-        volumes_str = ", ".join(volumes) if volumes else ""
+            volumes = []
+            if 'volumes' in config and config['volumes']:
+                volumes = list(config['volumes'].keys())
 
-        return networks_str, volumes_str
+            networks_str = ", ".join(networks) if networks else ""
+            volumes_str = ", ".join(volumes) if volumes else ""
+
+            return networks_str, volumes_str
+        else:
+            with open(compose_path, 'r') as f:
+                compose_data = yaml.safe_load(f)
+
+            networks = []
+            if 'networks' in compose_data and compose_data['networks']:
+                networks = list(compose_data['networks'].keys())
+
+            volumes = []
+            if 'volumes' in compose_data and compose_data['volumes']:
+                volumes = list(compose_data['volumes'].keys())
+
+            networks_str = ", ".join(networks) if networks else ""
+            volumes_str = ", ".join(volumes) if volumes else ""
+
+            return networks_str, volumes_str
 
     except Exception as e:
         print(f"Error parsing docker-compose.yml: {e}")
