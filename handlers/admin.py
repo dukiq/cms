@@ -209,6 +209,8 @@ async def callback_update_panel(callback: CallbackQuery):
     await callback.answer()
 
     update_script = '''#!/bin/bash
+export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+
 LOGFILE="/tmp/cms_update.log"
 exec > "$LOGFILE" 2>&1
 
