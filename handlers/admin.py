@@ -1,0 +1,192 @@
+import asyncio
+import html
+from aiogram import Router, F
+from aiogram.filters import Command
+from aiogram.types import Message, CallbackQuery
+from aiogram.fsm.context import FSMContext
+
+from utils.system_info import format_system_stats
+from utils.terminal import terminal_manager
+from utils.admins import add_admin, remove_admin
+from keyboards.inline import (
+    get_main_menu,
+    get_terminal_keyboard,
+    get_settings_menu,
+    get_admins_menu
+)
+from states import TerminalStates, AdminStates
+
+router = Router()
+
+
+@router.message(Command("start"))
+async def cmd_start(message: Message, state: FSMContext):
+    await state.clear()
+    stats = format_system_stats()
+    await message.answer(stats, parse_mode="HTML", reply_markup=get_main_menu())
+
+
+@router.callback_query(F.data == "terminal")
+async def callback_terminal(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(
+        "<blockquote><tg-emoji emoji-id='5174912572037530196'>👋</tg-emoji><b>Введите команду:</b></blockquote>",
+        parse_mode="HTML"
+    )
+    await state.set_state(TerminalStates.waiting_command)
+    await callback.answer()
+
+
+@router.message(TerminalStates.waiting_command)
+async def process_terminal_command(message: Message, state: FSMContext):
+    command = message.text
+
+    terminal_manager.execute_command_live(message.from_user.id, command)
+
+    sent_message = await message.answer(
+        "<blockquote>Выполнение...</blockquote>",
+        parse_mode="HTML"
+    )
+
+    last_output = ""
+    max_iterations = 360
+
+    for _ in range(max_iterations):
+        await asyncio.sleep(5)
+
+        output, venv_name, is_complete = terminal_manager.get_live_output(message.from_user.id)
+
+        escaped_output = html.escape(output)
+
+        if venv_name:
+            formatted_output = f"({venv_name}) {escaped_output}"
+        else:
+            formatted_output = escaped_output
+
+        if formatted_output != last_output:
+            try:
+                await sent_message.edit_text(
+                    f"<blockquote>{formatted_output}</blockquote>",
+                    parse_mode="HTML"
+                )
+                last_output = formatted_output
+            except Exception as e:
+                print(f"Error editing message: {e}")
+
+        if is_complete:
+            terminal_manager.cleanup_live(message.from_user.id)
+            try:
+                # Обновляем текст финальным выводом и добавляем клавиатуру
+                await sent_message.edit_text(
+                    f"<blockquote>{formatted_output}</blockquote>",
+                    parse_mode="HTML",
+                    reply_markup=get_terminal_keyboard()
+                )
+            except Exception as e:
+                print(f"Error updating final message: {e}")
+                try:
+                    await sent_message.edit_reply_markup(reply_markup=get_terminal_keyboard())
+                except:
+                    pass
+            break
+
+
+@router.callback_query(F.data == "terminal_stop")
+async def callback_terminal_stop(callback: CallbackQuery, state: FSMContext):
+    terminal_manager.close_session(callback.from_user.id)
+    await state.clear()
+
+    stats = format_system_stats()
+    await callback.message.edit_text(stats, parse_mode="HTML", reply_markup=get_main_menu())
+    await callback.answer()
+
+
+@router.callback_query(F.data == "settings")
+async def callback_settings(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "<tg-emoji emoji-id='5174760671929172797'>👋</tg-emoji><b>Настройки</b>",
+        parse_mode="HTML",
+        reply_markup=get_settings_menu()
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "admins")
+async def callback_admins(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "<tg-emoji emoji-id='5174760671929172797'>👋</tg-emoji><b>Админы</b>",
+        parse_mode="HTML",
+        reply_markup=get_admins_menu()
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "admin_add")
+async def callback_admin_add(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(
+        "<tg-emoji emoji-id='5172623642231571081'>👋</tg-emoji>Введите айди:",
+        parse_mode="HTML"
+    )
+    await state.set_state(AdminStates.waiting_add_id)
+    await callback.answer()
+
+
+@router.message(AdminStates.waiting_add_id)
+async def process_admin_add(message: Message, state: FSMContext):
+    try:
+        user_id = int(message.text)
+        add_admin(user_id)
+        msg = await message.answer("Админ добавлен")
+
+        await asyncio.sleep(2)
+        await msg.delete()
+
+        await state.clear()
+        stats = format_system_stats()
+        await message.answer(stats, parse_mode="HTML", reply_markup=get_main_menu())
+    except ValueError:
+        await message.answer("Неверный формат ID")
+
+
+@router.callback_query(F.data == "admin_remove")
+async def callback_admin_remove(callback: CallbackQuery, state: FSMContext):
+    await callback.message.edit_text(
+        "<tg-emoji emoji-id='5172623642231571081'>👋</tg-emoji>Введите айди:",
+        parse_mode="HTML"
+    )
+    await state.set_state(AdminStates.waiting_remove_id)
+    await callback.answer()
+
+
+@router.message(AdminStates.waiting_remove_id)
+async def process_admin_remove(message: Message, state: FSMContext):
+    try:
+        user_id = int(message.text)
+        remove_admin(user_id)
+        msg = await message.answer("Админ удален")
+
+        await asyncio.sleep(2)
+        await msg.delete()
+
+        await state.clear()
+        stats = format_system_stats()
+        await message.answer(stats, parse_mode="HTML", reply_markup=get_main_menu())
+    except ValueError:
+        await message.answer("Неверный формат ID")
+
+
+@router.callback_query(F.data == "back_settings")
+async def callback_back_settings(callback: CallbackQuery):
+    await callback.message.edit_text(
+        "<tg-emoji emoji-id='5174760671929172797'>👋</tg-emoji><b>Настройки</b>",
+        parse_mode="HTML",
+        reply_markup=get_settings_menu()
+    )
+    await callback.answer()
+
+
+@router.callback_query(F.data == "back_main")
+async def callback_back_main(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    stats = format_system_stats()
+    await callback.message.edit_text(stats, parse_mode="HTML", reply_markup=get_main_menu())
+    await callback.answer()
