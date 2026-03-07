@@ -58,9 +58,10 @@ fi
 echo ""
 echo "Установка python3-venv..."
 if command -v apt &> /dev/null; then
-    apt install -y python3-venv
+    PYTHON_VERSION=$(python3 --version | grep -oP '\d+\.\d+' | head -1)
+    apt install -y python${PYTHON_VERSION}-venv python3-pip
 elif command -v yum &> /dev/null; then
-    yum install -y python3-venv
+    yum install -y python3-venv python3-pip
 fi
 
 echo ""
