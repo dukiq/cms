@@ -209,10 +209,14 @@ async def callback_update_panel(callback: CallbackQuery):
     await callback.answer()
 
     update_script = '''#!/bin/bash
+LOGFILE="/tmp/cms_update.log"
+exec > "$LOGFILE" 2>&1
+
 set -e
 
 INSTALL_DIR="/opt/cms"
 
+echo "Начало обновления..."
 sleep 2
 
 cd "$INSTALL_DIR"
@@ -239,6 +243,7 @@ curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
   -d "parse_mode=HTML" \
   -d "text=<tg-emoji emoji-id='5172533495162995360'>👋</tg-emoji> <b>Обновление панели завершено</b>"
 
+echo "Обновление завершено успешно"
 rm -f "$0"
 '''
 
