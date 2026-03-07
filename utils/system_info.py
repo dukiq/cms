@@ -1,14 +1,12 @@
 import psutil
 import asyncio
 
-# Кешированная статистика
 _cached_cpu_percent = 0.0
 _cached_cpu_count = psutil.cpu_count()
 _cached_ram_percent = 0.0
 
 
 def update_system_stats():
-    """Обновляет кешированную статистику системы"""
     global _cached_cpu_percent, _cached_cpu_count, _cached_ram_percent
 
     _cached_cpu_percent = psutil.cpu_percent(interval=1)
@@ -19,7 +17,6 @@ def update_system_stats():
 
 
 def format_system_stats() -> str:
-    """Форматирует кешированную статистику системы для отображения"""
     cpu_total_percent = _cached_cpu_count * 100
 
     return (
@@ -30,7 +27,6 @@ def format_system_stats() -> str:
 
 
 async def stats_updater():
-    """Фоновая задача для обновления статистики каждую минуту"""
     while True:
         update_system_stats()
         await asyncio.sleep(60)

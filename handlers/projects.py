@@ -17,8 +17,7 @@ router = Router()
 
 
 def get_project_network(project_id: int) -> str:
-    """Получает основную сеть проекта"""
-    project = get_project(project_id)
+    """Получает основную сеть проекта    project = get_project(project_id)
     if not project:
         return None
     _, _, _, network, _ = project
@@ -27,8 +26,7 @@ def get_project_network(project_id: int) -> str:
 
 @router.callback_query(F.data == "projects")
 async def callback_projects(callback: CallbackQuery):
-    """Показывает список проектов"""
-    projects = get_all_projects()
+    """Показывает список проектов    projects = get_all_projects()
     text = format_docker_stats()
 
     await callback.message.edit_text(
@@ -41,8 +39,7 @@ async def callback_projects(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("projects_page_"))
 async def callback_projects_page(callback: CallbackQuery):
-    """Переключение страниц проектов"""
-    page = int(callback.data.split("_")[-1])
+    """Переключение страниц проектов    page = int(callback.data.split("_")[-1])
     projects = get_all_projects()
     text = format_docker_stats()
 
@@ -56,14 +53,12 @@ async def callback_projects_page(callback: CallbackQuery):
 
 @router.callback_query(F.data == "projects_current")
 async def callback_projects_current(callback: CallbackQuery):
-    """Текущая страница - ничего не делаем"""
-    await callback.answer()
+    """Текущая страница - ничего не делаем    await callback.answer()
 
 
 @router.callback_query(F.data.regexp(r"^project_\d+$"))
 async def callback_project_view(callback: CallbackQuery):
-    """Просмотр проекта"""
-    project_id = int(callback.data.split("_")[1])
+    """Просмотр проекта    project_id = int(callback.data.split("_")[1])
     project = get_project(project_id)
 
     if not project:
@@ -92,8 +87,7 @@ async def callback_project_view(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_restart_"))
 async def callback_project_restart(callback: CallbackQuery):
-    """Перезапуск проекта"""
-    project_id = int(callback.data.split("_")[2])
+    """Перезапуск проекта    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -119,8 +113,7 @@ async def callback_project_restart(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_rebuild_"))
 async def callback_project_rebuild(callback: CallbackQuery):
-    """Пересборка проекта"""
-    project_id = int(callback.data.split("_")[2])
+    """Пересборка проекта    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -156,8 +149,7 @@ async def callback_project_rebuild(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_toggle_"))
 async def callback_project_toggle(callback: CallbackQuery):
-    """Включить/выключить проект"""
-    project_id = int(callback.data.split("_")[2])
+    """Включить/выключить проект    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -185,8 +177,7 @@ async def callback_project_toggle(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_pull_"))
 async def callback_project_pull(callback: CallbackQuery):
-    """Git pull проекта"""
-    project_id = int(callback.data.split("_")[2])
+    """Git pull проекта    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -206,8 +197,7 @@ async def callback_project_pull(callback: CallbackQuery):
 
 @router.callback_query(F.data == "back_projects")
 async def callback_back_projects(callback: CallbackQuery):
-    """Возврат к списку проектов"""
-    projects = get_all_projects()
+    """Возврат к списку проектов    projects = get_all_projects()
     text = format_docker_stats()
 
     await callback.message.edit_text(
@@ -220,8 +210,7 @@ async def callback_back_projects(callback: CallbackQuery):
 
 @router.callback_query(F.data == "project_create")
 async def callback_project_create(callback: CallbackQuery, state: FSMContext):
-    """Создание проекта"""
-    await callback.message.edit_text(
+    """Создание проекта    await callback.message.edit_text(
         "Введите название проекта на английском (до 32 символов):",
         parse_mode="HTML"
     )
@@ -231,8 +220,7 @@ async def callback_project_create(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ProjectStates.waiting_name)
 async def process_project_name(message: Message, state: FSMContext):
-    """Обработка названия проекта"""
-    name = message.text.strip()
+    """Обработка названия проекта    name = message.text.strip()
 
     # Проверка на английские символы и длину
     if not re.match(r'^[a-zA-Z0-9_-]+$', name):
@@ -252,8 +240,7 @@ async def process_project_name(message: Message, state: FSMContext):
 
 @router.message(ProjectStates.waiting_path)
 async def process_project_path(message: Message, state: FSMContext):
-    """Обработка пути проекта"""
-    path = message.text.strip()
+    """Обработка пути проекта    path = message.text.strip()
 
     # Проверка существования директории
     if not os.path.isdir(path):
@@ -292,8 +279,7 @@ async def process_project_path(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.regexp(r"^project_delete_\d+$"))
 async def callback_project_delete(callback: CallbackQuery, state: FSMContext):
-    """Запрос пароля для удаления проекта"""
-    project_id = int(callback.data.split("_")[2])
+    """Запрос пароля для удаления проекта    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:
@@ -313,8 +299,7 @@ async def callback_project_delete(callback: CallbackQuery, state: FSMContext):
 
 @router.message(ProjectStates.waiting_delete_password)
 async def process_delete_password(message: Message, state: FSMContext):
-    """Проверка пароля для удаления"""
-    password = message.text.strip()
+    """Проверка пароля для удаления    password = message.text.strip()
 
     if password != DELETE_PASSWORD:
         await message.answer("Неверный пароль")
@@ -336,8 +321,7 @@ async def process_delete_password(message: Message, state: FSMContext):
 
 @router.callback_query(F.data.startswith("project_delete_yes_"))
 async def callback_project_delete_yes(callback: CallbackQuery):
-    """Удаление проекта с директорией"""
-    project_id = int(callback.data.split("_")[3])
+    """Удаление проекта с директорией    project_id = int(callback.data.split("_")[3])
     project = get_project(project_id)
 
     if not project:
@@ -371,8 +355,7 @@ async def callback_project_delete_yes(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_delete_no_"))
 async def callback_project_delete_no(callback: CallbackQuery):
-    """Удаление проекта только из БД"""
-    project_id = int(callback.data.split("_")[3])
+    """Удаление проекта только из БД    project_id = int(callback.data.split("_")[3])
     project = get_project(project_id)
 
     if not project:
@@ -399,8 +382,7 @@ async def callback_project_delete_no(callback: CallbackQuery):
 
 @router.callback_query(F.data.startswith("project_refresh_"))
 async def callback_project_refresh(callback: CallbackQuery):
-    """Обновление информации о проекте"""
-    project_id = int(callback.data.split("_")[2])
+    """Обновление информации о проекте    project_id = int(callback.data.split("_")[2])
     project = get_project(project_id)
 
     if not project:

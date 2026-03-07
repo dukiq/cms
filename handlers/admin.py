@@ -194,7 +194,6 @@ async def callback_back_main(callback: CallbackQuery, state: FSMContext):
 
 @router.callback_query(F.data == "update_panel")
 async def callback_update_panel(callback: CallbackQuery):
-    """Обновление панели"""
     import subprocess
     import os
     import logging

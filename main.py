@@ -18,10 +18,9 @@ logger = logging.getLogger(__name__)
 
 
 async def update_checker(bot: Bot):
-    """Фоновая задача для проверки обновлений каждые 3 часа"""
     while True:
         try:
-            await asyncio.sleep(10800)  # 3 часа
+            await asyncio.sleep(10800)
 
             logger.info("Проверка обновлений...")
             result = check_for_updates()
@@ -30,12 +29,10 @@ async def update_checker(bot: Bot):
                 _, commit_hash, commit_message = result
                 logger.info(f"Найдено обновление: {commit_hash} - {commit_message}")
 
-                # Получаем список всех админов
                 admin_ids = [ADMIN_ID]
                 db_admins = get_all_admins()
                 admin_ids.extend([admin_id for admin_id, in db_admins])
 
-                # Отправляем уведомления
                 await notify_admins_about_update(bot, admin_ids, commit_hash, commit_message)
         except Exception as e:
             logger.error(f"Ошибка при проверке обновлений: {e}")
@@ -45,12 +42,10 @@ async def main():
     init_database()
     logger.info("База данных инициализирована")
 
-    # Обновляем статистику при старте
     update_system_stats()
     update_docker_stats()
     logger.info("Статистика системы и Docker обновлена")
 
-    # Инициализируем проверку обновлений
     check_for_updates()
     logger.info("Проверка обновлений инициализирована")
 
@@ -59,7 +54,6 @@ async def main():
         default=DefaultBotProperties(parse_mode=ParseMode.HTML)
     )
 
-    # Запускаем фоновые задачи для обновления статистики
     asyncio.create_task(stats_updater())
     asyncio.create_task(docker_stats_updater())
     asyncio.create_task(update_checker(bot))
