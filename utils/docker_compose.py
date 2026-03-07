@@ -18,54 +18,41 @@ def parse_docker_compose(project_path: str) -> tuple[str, str]:
         return "", ""
 
     try:
-        result = subprocess.run(
-            ["docker", "compose", "config", "--format", "json"],
-            cwd=project_path,
-            capture_output=True,
-            text=True,
-            timeout=10
-        )
+        with open(compose_path, 'r') as f:
+            compose_data = yaml.safe_load(f)
 
-        if result.returncode == 0:
-            import json
-            config = json.loads(result.stdout)
+        project_name = os.path.basename(project_path)
 
-            networks = []
-            if 'networks' in config and config['networks']:
-                for net_key, net_data in config['networks'].items():
-                    if isinstance(net_data, dict) and 'name' in net_data:
-                        networks.append(net_data['name'])
+        networks = []
+        if 'networks' in compose_data and compose_data['networks']:
+            for net_key, net_data in compose_data['networks'].items():
+                if isinstance(net_data, dict) and 'name' in net_data:
+                    networks.append(net_data['name'])
+                else:
+                    real_name = f"{project_name}_{net_key}"
+                    result = subprocess.run(
+                        ["docker", "network", "ls", "--format", "{{.Name}}", "--filter", f"name={real_name}"],
+                        capture_output=True,
+                        text=True,
+                        timeout=5
+                    )
+                    if result.returncode == 0 and result.stdout.strip():
+                        networks.append(result.stdout.strip())
                     else:
                         networks.append(net_key)
 
-            volumes = []
-            if 'volumes' in config and config['volumes']:
-                for vol_key, vol_data in config['volumes'].items():
-                    if isinstance(vol_data, dict) and 'name' in vol_data:
-                        volumes.append(vol_data['name'])
-                    else:
-                        volumes.append(vol_key)
+        volumes = []
+        if 'volumes' in compose_data and compose_data['volumes']:
+            for vol_key, vol_data in compose_data['volumes'].items():
+                if isinstance(vol_data, dict) and 'name' in vol_data:
+                    volumes.append(vol_data['name'])
+                else:
+                    volumes.append(vol_key)
 
-            networks_str = ", ".join(networks) if networks else ""
-            volumes_str = ", ".join(volumes) if volumes else ""
+        networks_str = ", ".join(networks) if networks else ""
+        volumes_str = ", ".join(volumes) if volumes else ""
 
-            return networks_str, volumes_str
-        else:
-            with open(compose_path, 'r') as f:
-                compose_data = yaml.safe_load(f)
-
-            networks = []
-            if 'networks' in compose_data and compose_data['networks']:
-                networks = list(compose_data['networks'].keys())
-
-            volumes = []
-            if 'volumes' in compose_data and compose_data['volumes']:
-                volumes = list(compose_data['volumes'].keys())
-
-            networks_str = ", ".join(networks) if networks else ""
-            volumes_str = ", ".join(volumes) if volumes else ""
-
-            return networks_str, volumes_str
+        return networks_str, volumes_str
 
     except Exception as e:
         print(f"Error parsing docker-compose.yml: {e}")
