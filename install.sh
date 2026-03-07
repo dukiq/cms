@@ -13,7 +13,7 @@ $$         $$$$"$$  '''    $
 EOF
 echo ""
 
-read -p "Введите директорию установки (/opt/cms): " INSTALL_DIR
+read -p "Введите директорию установки (/opt/cms): " INSTALL_DIR </dev/tty
 INSTALL_DIR=${INSTALL_DIR:-/opt/cms}
 
 echo ""
@@ -21,7 +21,7 @@ echo "Установка в: $INSTALL_DIR"
 echo ""
 
 if [ -d "$INSTALL_DIR" ]; then
-    read -p "Директория существует. Удалить и переустановить? (y/n): " CONFIRM
+    read -p "Директория существует. Удалить и переустановить? (y/n): " CONFIRM </dev/tty
     if [ "$CONFIRM" = "y" ]; then
         rm -rf "$INSTALL_DIR"
     else
@@ -71,9 +71,9 @@ pip install -r requirements.txt
 echo ""
 echo "Конфигурация"
 echo "============"
-read -p "Введите токен бота: " BOT_TOKEN
-read -p "Введите ID администратора: " ADMIN_ID
-read -sp "Введите пароль удаления: " DELETE_PASSWORD
+read -p "Введите токен бота: " BOT_TOKEN </dev/tty
+read -p "Введите ID администратора: " ADMIN_ID </dev/tty
+read -sp "Введите пароль удаления: " DELETE_PASSWORD </dev/tty
 echo ""
 
 cat > .env << EOF
