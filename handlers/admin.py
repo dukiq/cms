@@ -190,3 +190,85 @@ async def callback_back_main(callback: CallbackQuery, state: FSMContext):
     stats = format_system_stats()
     await callback.message.edit_text(stats, parse_mode="HTML", reply_markup=get_main_menu())
     await callback.answer()
+
+
+@router.callback_query(F.data == "update_panel")
+async def callback_update_panel(callback: CallbackQuery):
+    """Обновление панели"""
+    import subprocess
+    import os
+    from config import BOT_TOKEN, ADMIN_ID
+
+    await callback.message.edit_text(
+        "<tg-emoji emoji-id='5172533495162995360'>👋</tg-emoji> <b>Запуск обновления...</b>",
+        parse_mode="HTML"
+    )
+    await callback.answer()
+
+    update_script = '''#!/bin/bash
+set -e
+
+INSTALL_DIR="/opt/cms"
+TEMP_DIR="/opt/cms-temp"
+
+echo "Создание временной директории..."
+mkdir -p "$TEMP_DIR"
+
+echo "Копирование .env и базы данных..."
+cp "$INSTALL_DIR/.env" "$TEMP_DIR/"
+cp "$INSTALL_DIR/cms.db" "$TEMP_DIR/"
+
+echo "Остановка сервиса..."
+systemctl stop cmsdash
+
+echo "Удаление старой директории..."
+rm -rf "$INSTALL_DIR"
+
+echo "Клонирование репозитория..."
+git clone https://github.com/dukiq/cms "$INSTALL_DIR"
+cd "$INSTALL_DIR"
+
+echo "Восстановление .env и базы данных..."
+cp "$TEMP_DIR/.env" .env
+cp "$TEMP_DIR/cms.db" cms.db
+
+echo "Создание виртуального окружения..."
+python3 -m venv venv
+
+echo "Установка зависимостей..."
+. venv/bin/activate
+pip install -r requirements.txt
+
+echo "Перезапуск сервиса..."
+systemctl start cmsdash
+
+echo "Извлечение токена и ID..."
+BOT_TOKEN=$(grep BOT_TOKEN .env | cut -d'=' -f2)
+ADMIN_ID=$(grep ADMIN_ID .env | cut -d'=' -f2)
+
+sleep 3
+
+echo "Отправка уведомления..."
+curl -s -X POST "https://api.telegram.org/bot$BOT_TOKEN/sendMessage" \
+  -d "chat_id=$ADMIN_ID" \
+  -d "parse_mode=HTML" \
+  -d "text=<tg-emoji emoji-id='5172533495162995360'>👋</tg-emoji> <b>Обновление панели завершено</b>"
+
+echo "Очистка временной директории..."
+rm -rf "$TEMP_DIR"
+
+rm -f "$0"
+'''
+
+    script_path = "/opt/cms-temp/update.sh"
+    os.makedirs("/opt/cms-temp", exist_ok=True)
+
+    with open(script_path, "w") as f:
+        f.write(update_script)
+
+    os.chmod(script_path, 0o755)
+
+    subprocess.Popen(["bash", script_path],
+                     stdout=subprocess.DEVNULL,
+                     stderr=subprocess.DEVNULL,
+                     start_new_session=True)

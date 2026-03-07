@@ -73,6 +73,14 @@ echo "Установка зависимостей..."
 pip install -r requirements.txt
 
 echo ""
+echo "Инициализация базы данных..."
+python3 << 'PYEOF'
+from utils.database import init_database
+init_database()
+print("База данных создана")
+PYEOF
+
+echo ""
 echo "Конфигурация"
 echo "============"
 read -p "Введите токен бота: " BOT_TOKEN

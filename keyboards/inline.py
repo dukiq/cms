@@ -27,6 +27,13 @@ def get_main_menu() -> InlineKeyboardMarkup:
                 icon_custom_emoji_id="5172494668658639634",
                 callback_data="explorer"
             )
+        ],
+        [
+            InlineKeyboardButton(
+                text="Обновить панель",
+                icon_custom_emoji_id="5172533495162995360",
+                callback_data="update_panel"
+            )
         ]
     ])
 
