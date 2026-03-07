@@ -56,6 +56,14 @@ if ! command -v docker &> /dev/null; then
 fi
 
 echo ""
+echo "Установка python3-venv..."
+if command -v apt &> /dev/null; then
+    apt install -y python3-venv
+elif command -v yum &> /dev/null; then
+    yum install -y python3-venv
+fi
+
+echo ""
 echo "Создание виртуального окружения..."
 python3 -m venv venv
 
