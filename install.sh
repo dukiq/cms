@@ -77,8 +77,7 @@ echo "Конфигурация"
 echo "============"
 read -p "Введите токен бота: " BOT_TOKEN
 read -p "Введите ID администратора: " ADMIN_ID
-read -sp "Введите пароль удаления: " DELETE_PASSWORD
-echo ""
+read -p "Введите пароль удаления: " DELETE_PASSWORD
 
 cat > .env << EOF
 BOT_TOKEN=$BOT_TOKEN
