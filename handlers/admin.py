@@ -231,9 +231,11 @@ echo "Установка зависимостей..."
 pip install -r requirements.txt
 
 echo "Перезапуск сервиса..."
-systemctl restart cmsdash
+systemctl restart cmsdash || true
 
-sleep 3
+set +e
+
+sleep 5
 
 echo "Извлечение токена и ID..."
 BOT_TOKEN=$(grep BOT_TOKEN .env | cut -d'=' -f2)
