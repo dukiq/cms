@@ -6,22 +6,15 @@ from aiogram.types import CallbackQuery, FSInputFile, Message
 from aiogram.fsm.context import FSMContext
 from config import DELETE_PASSWORD
 from utils.database import get_all_projects, get_project, add_project, delete_project, update_project
-from utils.docker_info import format_docker_stats, get_project_containers_count, is_project_running
-from utils.docker_compose import parse_docker_compose
 from utils.projects import restart_project, rebuild_project, stop_project, start_project, git_pull
 from keyboards.inline import get_projects_menu, get_project_menu, get_delete_confirmation_menu
 from states import ProjectStates
 router = Router()
-def get_project_network(project_id: int) -> str:
-    project = get_project(project_id)
-    if not project:
-        return None
-    _, _, _, network, _ = project
-    return network.split(",")[0].strip() if network else None
+
 @router.callback_query(F.data == "projects")
 async def callback_projects(callback: CallbackQuery):
     projects = get_all_projects()
-    text = format_docker_stats()
+    text = '<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>Проекты</b>'
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
@@ -32,7 +25,7 @@ async def callback_projects(callback: CallbackQuery):
 async def callback_projects_page(callback: CallbackQuery):
     page = int(callback.data.split("_")[-1])
     projects = get_all_projects()
-    text = format_docker_stats()
+    text = '<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>Проекты</b>'
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
@@ -50,19 +43,14 @@ async def callback_project_view(callback: CallbackQuery):
         await callback.answer("Проект не найден", show_alert=True)
         return
     _, name, path, network, volumes = project
-    main_network = network.split(",")[0].strip() if network else None
-    containers_count = get_project_containers_count(network=main_network) if main_network else 0
-    is_running = is_project_running(network=main_network) if main_network else False
     text = (
         f'<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>{name}</b>\n'
-        f'<blockquote><tg-emoji emoji-id=\'5174696127160648257\'>👋</tg-emoji><b> Сеть:</b> {network or "не указана"}\n'
-        f'<tg-emoji emoji-id=\'5172494668658639634\'>👋</tg-emoji> <b>Контейнеры:</b> {containers_count}\n'
-        f'<tg-emoji emoji-id=\'5175135107178038706\'>👋</tg-emoji> <b>Разделы:</b> {volumes or "не указаны"}</blockquote>'
+        f'<blockquote><tg-emoji emoji-id=\'5174696127160648257\'>👋</tg-emoji><b> Путь:</b> {path}</blockquote>'
     )
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
-        reply_markup=get_project_menu(project_id, is_running)
+        reply_markup=get_project_menu(project_id, False)
     )
     await callback.answer()
 @router.callback_query(F.data.startswith("project_restart_"))
@@ -79,9 +67,8 @@ async def callback_project_restart(callback: CallbackQuery):
         await callback.answer(f"Ошибка: {error}", show_alert=True)
     else:
         await callback.answer("Проект перезапущен")
-    is_running = is_project_running(network=get_project_network(project_id))
     await callback.message.edit_reply_markup(
-        reply_markup=get_project_menu(project_id, is_running)
+        reply_markup=get_project_menu(project_id, False)
     )
 @router.callback_query(F.data.startswith("project_rebuild_"))
 async def callback_project_rebuild(callback: CallbackQuery):
@@ -102,13 +89,13 @@ async def callback_project_rebuild(callback: CallbackQuery):
         await callback.message.edit_text(
             "<tg-emoji emoji-id='5172888203627070189'>👋</tg-emoji> <b>Ошибка при пересборке</b>",
             parse_mode="HTML",
-            reply_markup=get_project_menu(project_id, is_project_running(network=get_project_network(project_id)))
+            reply_markup=get_project_menu(project_id, False)
         )
     else:
         await callback.message.edit_text(
             "<tg-emoji emoji-id='5172888203627070189'>👋</tg-emoji> <b>Контейнер пересобран</b>",
             parse_mode="HTML",
-            reply_markup=get_project_menu(project_id, is_project_running(network=get_project_network(project_id)))
+            reply_markup=get_project_menu(project_id, False)
         )
 @router.callback_query(F.data.startswith("project_toggle_"))
 async def callback_project_toggle(callback: CallbackQuery):
@@ -118,17 +105,12 @@ async def callback_project_toggle(callback: CallbackQuery):
         await callback.answer("Проект не найден", show_alert=True)
         return
     _, name, path, _, _ = project
-    is_running = is_project_running(network=get_project_network(project_id))
-    if is_running:
-        success, output = await stop_project(path)
-        message = "Контейнер выключен"
-    else:
-        success, output = await start_project(path)
-        message = "Контейнер включен"
+    # Всегда пытаемся запустить проект
+    success, output = await start_project(path)
+    message = "Контейнер запущен" if success else "Ошибка запуска"
     await callback.answer(message, show_alert=True)
-    is_running = is_project_running(network=get_project_network(project_id))
     await callback.message.edit_reply_markup(
-        reply_markup=get_project_menu(project_id, is_running)
+        reply_markup=get_project_menu(project_id, False)
     )
 @router.callback_query(F.data.startswith("project_pull_"))
 async def callback_project_pull(callback: CallbackQuery):
@@ -147,7 +129,7 @@ async def callback_project_pull(callback: CallbackQuery):
 @router.callback_query(F.data == "back_projects")
 async def callback_back_projects(callback: CallbackQuery):
     projects = get_all_projects()
-    text = format_docker_stats()
+    text = '<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>Проекты</b>'
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
@@ -182,12 +164,11 @@ async def process_project_path(message: Message, state: FSMContext):
         return
     data = await state.get_data()
     name = data.get("name")
-    network, volumes = parse_docker_compose(path)
     try:
-        project_id = add_project(name, path, network, volumes)
+        project_id = add_project(name, path, "", "")
         await state.clear()
         projects = get_all_projects()
-        text = format_docker_stats()
+        text = '<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>Проекты</b>'
         await message.answer(
             f"Проект <b>{name}</b> создан!",
             parse_mode="HTML"
@@ -244,7 +225,7 @@ async def callback_project_delete_yes(callback: CallbackQuery):
     delete_project(project_id)
     await callback.answer("Проект и директория удалены")
     projects = get_all_projects()
-    text = format_docker_stats()
+    text = '<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>Проекты</b>'
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
@@ -261,7 +242,7 @@ async def callback_project_delete_no(callback: CallbackQuery):
     delete_project(project_id)
     await callback.answer("Проект удален из БД")
     projects = get_all_projects()
-    text = format_docker_stats()
+    text = '<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>Проекты</b>'
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
@@ -275,20 +256,13 @@ async def callback_project_refresh(callback: CallbackQuery):
         await callback.answer("Проект не найден", show_alert=True)
         return
     _, name, path, _, _ = project
-    network, volumes = parse_docker_compose(path)
-    update_project(project_id, network, volumes)
-    main_network = get_project_network(project_id)
-    containers_count = get_project_containers_count(network=main_network) if main_network else 0
-    is_running = is_project_running(network=main_network)
     text = (
         f'<tg-emoji emoji-id=\'5172928932801938153\'>👋</tg-emoji> <b>{name}</b>\n'
-        f'<blockquote><tg-emoji emoji-id=\'5174696127160648257\'>👋</tg-emoji><b> Сеть:</b> {network or "не указана"}\n'
-        f'<tg-emoji emoji-id=\'5172494668658639634\'>👋</tg-emoji> <b>Контейнеры:</b> {containers_count}\n'
-        f'<tg-emoji emoji-id=\'5175135107178038706\'>👋</tg-emoji> <b>Разделы:</b> {volumes or "не указаны"}</blockquote>'
+        f'<blockquote><tg-emoji emoji-id=\'5174696127160648257\'>👋</tg-emoji><b> Путь:</b> {path}</blockquote>'
     )
     await callback.message.edit_text(
         text,
         parse_mode="HTML",
-        reply_markup=get_project_menu(project_id, is_running)
+        reply_markup=get_project_menu(project_id, False)
     )
     await callback.answer()
